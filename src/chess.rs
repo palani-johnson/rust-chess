@@ -19,19 +19,19 @@ pub fn term_run() {
             }
         }
 
-        let mut p0 = 64;
+        let mut _p0 = 64;
         match get_pos() {
             ExitType::Esc => return,
             ExitType::Again => {
                 history.push(board);
                 continue;
             },
-            ExitType::Pos(p@0..=63) => p0 = p,
+            ExitType::Pos(p@0..=63) => _p0 = p,
             ExitType::Pos(_) => panic!(),
         }
 
 
-        let move_bb = board.moves[p0];
+        let move_bb = board.moves[_p0];
         print_bitboard(move_bb, 2, 6);
         if move_bb != 0 {
             for (piece, piece_bb) in board.pieces.iter().enumerate() {
@@ -42,21 +42,21 @@ pub fn term_run() {
             continue;
         }
         
-        let mut p1 = 64;
+        let mut _p1 = 64;
         match get_pos() {
             ExitType::Esc => return,
             ExitType::Again => {
                 history.push(board);
                 continue;
             },
-            ExitType::Pos(p@0..=63) => p1 = p,
+            ExitType::Pos(p@0..=63) => _p1 = p,
             ExitType::Pos(_) => panic!(),
         }
 
-        if 1<<p1 & move_bb != 0 {
-            print_move(p0, p1);
+        if 1<<_p1 & move_bb != 0 {
+            print_move(_p0, _p1);
 
-            let next = board.perform_move(p0, p1);
+            let next = board.perform_move(_p0, _p1);
             history.push(board);
             history.push(next);
         } else {
