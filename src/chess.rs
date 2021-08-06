@@ -1,5 +1,6 @@
 mod engine;
 mod term;
+mod cache;
 
 use term::*;
 use engine::Board;
