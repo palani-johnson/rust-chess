@@ -17,7 +17,7 @@ use std::char;
 
 const FG_COLORS: [Fg<AnsiValue>; 3] = [Fg(AnsiValue(92)), Fg(AnsiValue(30)), Fg(AnsiValue(160))];
 const BG_COLORS: [Bg<AnsiValue>; 2] = [Bg(AnsiValue(207)), Bg(AnsiValue(226))];
-const ICON_LIST: [char; 7] = ['♟', '♞', '♜', '♝', '♛', '♚', '·'];
+const ICON_LIST: [char; 7] = ['♛', '♚', '♝', '♜', '♞', '♟', '·'];
 
 
 pub fn init_term() {
