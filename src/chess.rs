@@ -21,13 +21,13 @@ pub fn term_run() {
 
         let mut _p0 = 64;
         match get_pos() {
-            ExitType::Esc => return,
-            ExitType::Again => {
+            Action::Esc => return,
+            Action::Back => continue,
+            Action::Pos(p@0..=63) => _p0 = p,
+            _ => {
                 history.push(board);
                 continue;
             },
-            ExitType::Pos(p@0..=63) => _p0 = p,
-            ExitType::Pos(_) => panic!(),
         }
 
 
@@ -44,13 +44,13 @@ pub fn term_run() {
         
         let mut _p1 = 64;
         match get_pos() {
-            ExitType::Esc => return,
-            ExitType::Again => {
+            Action::Esc => return,
+            Action::Back => continue,
+            Action::Pos(p@0..=63) => _p1 = p,
+            _ => {
                 history.push(board);
                 continue;
             },
-            ExitType::Pos(p@0..=63) => _p1 = p,
-            ExitType::Pos(_) => panic!(),
         }
 
         if 1<<_p1 & move_bb != 0 {

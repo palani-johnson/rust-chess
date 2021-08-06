@@ -78,30 +78,33 @@ pub fn print_bitboard(bitboard: u64, player: usize, piece: usize) {
 }
 
 
-pub enum ExitType {
+pub enum Action {
     Pos(usize),
     Again,
-    Esc
+    Esc,
+    Back
 }
 
-pub fn get_pos() -> ExitType {
+pub fn get_pos() -> Action {
     let stdin = stdin();
     let mut stdout = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 
-    write!(stdout, "{}Esc to exit.", Goto(1, 15)).unwrap();
+    write!(stdout, "{}Esc to exit. Del to undo.", Goto(1, 15)).unwrap();
     stdout.flush().unwrap();
 
     for c in stdin.events() {
         let evt = c.unwrap();
         match evt {
-            Event::Key(Key::Esc) => return ExitType::Esc,
+            Event::Key(Key::Esc) => return Action::Esc,
+            Event::Key(Key::Delete) => return Action::Back,
             Event::Mouse(me) => {
                 match me {
                     MouseEvent::Press(_, x@3..=10, y@3..=10) => {
                         let rank = 10 - y;
                         let file = x - 3;
-                        return ExitType::Pos((file + 8*rank) as usize);
+                        return Action::Pos((file + 8*rank) as usize);
                     },
+                    MouseEvent::Press(_, _, _) => return Action::Again,
                     _ => (),
                 }
             }
@@ -109,7 +112,7 @@ pub fn get_pos() -> ExitType {
         }
     }
 
-    return ExitType::Again;
+    return Action::Again;
 }
 
 pub fn print_move(p0: usize, p1: usize) {
