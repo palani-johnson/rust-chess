@@ -16,17 +16,11 @@ pub struct Board {
 impl Board {
     pub fn init() -> Board { 
         Board {
-            players: START_BOARD.players,
-            pieces: START_BOARD.pieces,
+            players: PLAYERS_START,
+            pieces: PIECES_START,
             checkmate: false,
-            turn: START_BOARD.turn,
-            moves: gen_moves(
-                START_BOARD.pieces.map( |p| 
-                    p & START_BOARD.players[0]
-                ),
-                START_BOARD.players[1],
-                START_BOARD.turn
-            )
+            turn: true,
+            moves: [0; 64]
         }
     }
 
