@@ -4,7 +4,7 @@ pub struct Board {
     // Player bitboards: [player1, player2]
     pub players: [u64; 2],
 
-    // Pieces bitboards: [pawns, knights, rooks, bishops, queens, kings]
+    // Pieces bitboards: [kings, queens, bishops, rooks, knights, pawns]
     pub pieces: [u64; 6],
 
     pub turn: bool,
@@ -15,13 +15,15 @@ pub struct Board {
 
 impl Board {
     pub fn init() -> Board { 
-        Board {
+        let mut board = Board {
             players: PLAYERS_START,
             pieces: PIECES_START,
             checkmate: false,
             turn: true,
             moves: [0; 64]
-        }
+        };
+        board.gen_moves();
+        return board;
     }
 
     pub fn perform_move(&self, p0: usize, p1: usize) -> Board {
@@ -34,47 +36,37 @@ impl Board {
         if let Some((i, _)) = player_num { players[i] |= 1<<p1; }
         if let Some((i, _)) = piece_num { pieces[i] |= 1<<p1; }
 
-        let turn = !self.turn;
-
-        Board {
+        let mut board = Board {
             players: players,
             pieces: pieces,
             checkmate: false,
-            turn: turn,
-            moves: gen_moves(
-                pieces.map( |p| 
-                    p & if turn {players[0]} else {players[1]}
-                ),
-                if turn {players[1]} else {players[0]},
-                turn
-            )
-        }
-    }
-}
-
-fn gen_moves(
-    our_pieces: [u64; 6], 
-    opp: u64, 
-    turn: bool
-) -> [u64; 64] {
-    let mut moves = [0; 64];
-
-    for (i, piece) in our_pieces.iter().enumerate() {
-        let mut piece = *piece;
-
-        while let pos@0..=63 = piece.trailing_zeros() as usize {
-            moves[pos] = match i {
-                0 => 0,
-                1 => 1,
-                2 => 2,
-                3 => 3,
-                4 => 4,
-                5 => 5,
-                _ => 0
-            };
-            piece ^= 1 << pos;
-        }
+            turn: !self.turn,
+            moves: [0; 64]
+        };
+        board.gen_moves();
+        return board;
     }
 
-    return moves;
+    fn gen_moves(&mut self) {
+        let us = if self.turn {self.players[0]} else {self.players[1]};
+        let them = if self.turn {self.players[1]} else {self.players[0]};
+        let our_pieces = self.pieces.map(|p| p&us);
+
+        for (i, piece) in our_pieces.iter().enumerate() {
+            let mut piece = *piece;
+    
+            while let pos@0..=63 = piece.trailing_zeros() as usize {
+                self.moves[pos] = match i {
+                    0 => KING_CACHE[pos] & !us,
+                    1 => 1,
+                    2 => 2,
+                    3 => 3,
+                    4 => KNIGHT_CACHE[pos] & !us,
+                    5 => 5,
+                    _ => 0
+                };
+                piece ^= 1 << pos;
+            }
+        }
+    }
 }
