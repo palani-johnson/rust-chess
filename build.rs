@@ -37,7 +37,12 @@ pub const RANKS: [u64; 8] = {:#0x?};",
 }
 
 fn gen_ranks() -> [u64; 8] {
-    [0xff, 8].map(|r| r<<(8*i))
+    let mut i = 0;
+    return [0xff; 8].map(|r| {
+        let rank = r<<(8*i);
+        i += 1;
+        rank
+    });
 }
 
 fn gen_knight_cache() -> [u64; 64] {
