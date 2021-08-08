@@ -26,11 +26,18 @@ pub const PIECES_START: [u64; 6] = [
 
 pub const KNIGHT_CACHE: [u64; 64] = {:#0x?};
 
-pub const KING_CACHE: [u64; 64] = {:#0x?};",
+pub const KING_CACHE: [u64; 64] = {:#0x?};
+
+pub const RANKS: [u64; 8] = {:#0x?};",
     gen_knight_cache(),
-    gen_king_cache())?;
+    gen_king_cache(),
+    gen_ranks())?;
 
     Ok(())
+}
+
+fn gen_ranks() -> [u64; 8] {
+    [0xff, 8].map(|r| r<<(8*i))
 }
 
 fn gen_knight_cache() -> [u64; 64] {
