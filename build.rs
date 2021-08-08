@@ -28,12 +28,30 @@ pub const KNIGHT_CACHE: [u64; 64] = {:#0x?};
 
 pub const KING_CACHE: [u64; 64] = {:#0x?};
 
-pub const RANKS: [u64; 8] = {:#0x?};",
+pub const RANKS: [u64; 8] = {:#0x?};
+
+pub const PAWN_ATTACKS_P0: [u64; 64] = {:#0x?};
+
+pub const PAWN_ATTACKS_P1: [u64; 64] = {:#0x?};",
     gen_knight_cache(),
     gen_king_cache(),
-    gen_ranks())?;
+    gen_ranks(),
+    gen_pawn_attacks_p0(),
+    gen_pawn_attacks_p1())?;
 
     Ok(())
+}
+
+fn gen_pawn_attacks_p0() -> [u64; 64] {
+    moves_from_pairs(vec![
+        (1, 1), (1, -1), 
+    ])
+}
+
+fn gen_pawn_attacks_p1() -> [u64; 64] {
+    moves_from_pairs(vec![
+        (-1, 1), (-1, -1), 
+    ])
 }
 
 fn gen_ranks() -> [u64; 8] {

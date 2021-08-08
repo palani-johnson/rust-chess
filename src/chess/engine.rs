@@ -48,8 +48,13 @@ impl Board {
     }
 
     fn gen_moves(&mut self) {
-        let us = if self.turn {self.players[0]} else {self.players[1]};
-        let them = if self.turn {self.players[1]} else {self.players[0]};
+        let (us, them) = match self.turn {
+            true => (self.players[0], self.players[1]),
+            false => (self.players[1], self.players[0]),
+        };
+
+        let any = us | them;
+
         let our_pieces = self.pieces.map(|p| p&us);
 
         for (i, piece) in our_pieces.iter().enumerate() {
@@ -57,12 +62,27 @@ impl Board {
     
             while let pos@0..=63 = piece.trailing_zeros() as usize {
                 self.moves[pos] = match i {
-                    0 => KING_CACHE[pos] & !us,
+                    0 => !us & KING_CACHE[pos],
                     1 => 1,
                     2 => 2,
                     3 => 3,
-                    4 => KNIGHT_CACHE[pos] & !us,
-                    5 => 5,
+                    4 => !us & KNIGHT_CACHE[pos],
+                    5 => match self.turn {
+                        true => {
+                            let mut mv = !any & 1<<(pos+8);
+                            if mv != 0 && (8..16).contains(&pos) {
+                                mv |= !any & 1<<(pos+16);
+                            }
+                            mv | (PAWN_ATTACKS_P0[pos] & them)
+                        },
+                        false => {
+                            let mut mv = !any & 1<<(pos-8);
+                            if mv != 0 && (48..56).contains(&pos) {
+                                mv |= !any & 1<<(pos-16);
+                            }
+                            mv | (PAWN_ATTACKS_P1[pos] & them)
+                        }
+                    },
                     _ => 0
                 };
                 piece ^= 1 << pos;
