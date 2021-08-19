@@ -20,7 +20,7 @@ pub fn term_run() {
             }
         }
 
-        let mut _p0 = 64;
+        let mut _p0 = 64; // using underscore to trick linter
         match get_pos() {
             Action::Esc => return,
             Action::Back => continue,
@@ -43,7 +43,7 @@ pub fn term_run() {
             continue;
         }
         
-        let mut _p1 = 64;
+        let mut _p1 = 64; // using underscore to trick linter
         match get_pos() {
             Action::Esc => return,
             Action::Back => continue,

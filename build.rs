@@ -24,18 +24,15 @@ pub const PIECES_START: [u64; 6] = [
     0x00ff00000000ff00, // Pawns            
 ];
 
-pub const KNIGHT_CACHE: [u64; 64] = {:#0x?};
+pub const KNIGHT_CACHE: [u64; 64] = {:?};
 
-pub const KING_CACHE: [u64; 64] = {:#0x?};
+pub const KING_CACHE: [u64; 64] = {:?};
 
-pub const RANKS: [u64; 8] = {:#0x?};
+pub const PAWN_ATTACKS_P0: [u64; 64] = {:?};
 
-pub const PAWN_ATTACKS_P0: [u64; 64] = {:#0x?};
-
-pub const PAWN_ATTACKS_P1: [u64; 64] = {:#0x?};",
+pub const PAWN_ATTACKS_P1: [u64; 64] = {:?};",
     gen_knight_cache(),
     gen_king_cache(),
-    gen_ranks(),
     gen_pawn_attacks_p0(),
     gen_pawn_attacks_p1())?;
 
@@ -52,15 +49,6 @@ fn gen_pawn_attacks_p1() -> [u64; 64] {
     moves_from_pairs(vec![
         (-1, 1), (-1, -1), 
     ])
-}
-
-fn gen_ranks() -> [u64; 8] {
-    let mut i = 0;
-    return [0xff; 8].map(|r| {
-        let rank = r<<(8*i);
-        i += 1;
-        rank
-    });
 }
 
 fn gen_knight_cache() -> [u64; 64] {
