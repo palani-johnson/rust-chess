@@ -3,13 +3,15 @@ use crate::chess::cache::*;
 pub struct Board {
     // Player bitboards: [player1, player2]
     pub players: [u64; 2],
-
     // Pieces bitboards: [kings, queens, bishops, rooks, knights, pawns]
     pub pieces: [u64; 6],
 
+    // board states
     pub turn: bool,
     pub checkmate: bool,
+    enpassant: u64,
 
+    // moves
     pub moves: [u64; 64],
 }
 
@@ -20,6 +22,7 @@ impl Board {
             pieces: PIECES_START,
             checkmate: false,
             turn: true,
+            enpassant: 0,
             moves: [0; 64]
         };
         board.gen_moves();
@@ -33,14 +36,22 @@ impl Board {
         let mut players = self.players.map(|p| p & !(1<<p0 | 1<<p1));
         let mut pieces = self.pieces.map(|p| p & !(1<<p0 | 1<<p1));
 
-        if let Some((i, _)) = player_num { players[i] |= 1<<p1; }
-        if let Some((i, _)) = piece_num { pieces[i] |= 1<<p1; }
+        if let Some((i, _)) = player_num {players[i] |= 1<<p1;}
+
+        let mut enpassant = 0;
+        if let Some((i, _)) = piece_num {
+            if i == 5 && (p1 as isize - p0 as isize).abs() > 10 {
+                enpassant |= 1<<p1;
+            }
+            pieces[i] |= 1<<p1;
+        }
 
         let mut board = Board {
             players: players,
             pieces: pieces,
             checkmate: false,
             turn: !self.turn,
+            enpassant: enpassant,
             moves: [0; 64]
         };
         board.gen_moves();
@@ -48,18 +59,31 @@ impl Board {
     }
 
     fn gen_moves(&mut self) {
-        let (us, them) = match self.turn {
-            true => (self.players[0], self.players[1]),
-            false => (self.players[1], self.players[0]),
+        let (us, them, pawn_attacks, pawn_home) = match self.turn {
+            true => (
+                self.players[0], 
+                self.players[1], 
+                PAWN_ATTACKS_P0,
+                8..16
+            ),
+            false => (
+                self.players[1], 
+                self.players[0], 
+                PAWN_ATTACKS_P1,
+                48..56
+            ),
+        };
+
+        let pawn_fn: Box<dyn Fn(usize, usize) -> u64> = match self.turn {
+            true => Box::new(|p, n| 1<<(p+n)),
+            false => Box::new(|p, n| 1<<(p-n)),
         };
 
         let any = us | them;
 
-        let our_pieces = self.pieces.map(|p| p&us);
+        let our_pieces = self.pieces.map(|p| p & us);
 
-        for (i, piece) in our_pieces.iter().enumerate() {
-            let mut piece = *piece;
-    
+        for (i, &(mut piece)) in our_pieces.iter().enumerate() {    
             while let pos@0..=63 = piece.trailing_zeros() as usize {
                 self.moves[pos] = match i {
                     0 => !us & KING_CACHE[pos],
@@ -67,21 +91,12 @@ impl Board {
                     2 => 2,
                     3 => 3,
                     4 => !us & KNIGHT_CACHE[pos],
-                    5 => match self.turn {
-                        true => {
-                            let mut mv = !any & 1<<(pos+8);
-                            if mv != 0 && (8..16).contains(&pos) {
-                                mv |= !any & 1<<(pos+16);
-                            }
-                            mv | (PAWN_ATTACKS_P0[pos] & them)
-                        },
-                        false => {
-                            let mut mv = !any & 1<<(pos-8);
-                            if mv != 0 && (48..56).contains(&pos) {
-                                mv |= !any & 1<<(pos-16);
-                            }
-                            mv | (PAWN_ATTACKS_P1[pos] & them)
+                    5 => {
+                        let mut mv = !any & pawn_fn(pos, 8);
+                        if mv != 0 && pawn_home.contains(&pos) {
+                            mv |= !any & pawn_fn(pos, 16);
                         }
+                        mv | (pawn_attacks[pos] & them)
                     },
                     _ => 0
                 };
