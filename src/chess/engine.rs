@@ -9,7 +9,8 @@ pub struct Board {
     // board states
     pub turn: bool,
     pub checkmate: bool,
-    enpassant: u64,
+    pub enpassant: u64,
+    pub enpassant_pos: (usize, usize),
 
     // moves
     pub moves: [u64; 64],
@@ -23,27 +24,51 @@ impl Board {
             checkmate: false,
             turn: true,
             enpassant: 0,
-            moves: [0; 64]
+            enpassant_pos: (64, 64),
+            moves: [0; 64],
         };
         board.gen_moves();
         return board;
     }
 
     pub fn perform_move(&self, p0: usize, p1: usize) -> Board {
-        let player_num = self.players.iter().enumerate().find(|p| 1<<p0 & p.1 != 0);
-        let piece_num = self.pieces.iter().enumerate().find(|p| 1<<p0 & p.1 != 0);
-          
-        let mut players = self.players.map(|p| p & !(1<<p0 | 1<<p1));
-        let mut pieces = self.pieces.map(|p| p & !(1<<p0 | 1<<p1));
+        let player_num = self.players.iter().enumerate().find(|p| {
+            1<<p0 & p.1 != 0
+        });
+        let piece_num = self.pieces.iter().enumerate().find(|p| {
+            1<<p0 & p.1 != 0
+        });
 
-        if let Some((i, _)) = player_num {players[i] |= 1<<p1;}
+        let remove_pieces: Box<dyn Fn(u64) -> u64>  = if 
+            (self.enpassant_pos.1 == p1)
+            && (((p0+1 == self.enpassant_pos.0) 
+            && (self.pieces[5] & 1<<(p0+1) != 0)) 
+            || ((p0-1 == self.enpassant_pos.0) 
+            && (self.pieces[5] & 1<<(p0-1) != 0))) 
+        {
+            Box::new(|p| p & !(1<<p0 | 1<<p1 | 1<<self.enpassant_pos.0))
+        } else {
+            Box::new(|p| p & !(1<<p0 | 1<<p1))
+        };
+        
+          
+        let mut players = self.players.map(&remove_pieces);
+        let mut pieces = self.pieces.map(remove_pieces);
 
         let mut enpassant = 0;
-        if let Some((i, _)) = piece_num {
-            if i == 5 && (p1 as isize - p0 as isize).abs() > 10 {
-                enpassant |= 1<<p1;
+        let mut enpassant_pos = (64, 64);
+        if let Some((i, _)) = player_num {
+            players[i] |= 1<<p1;
+            if let Some((j, _)) = piece_num {
+                pieces[j] |= 1<<p1;
+                if j == 5 && (p0 as isize - p1 as isize).abs() == 16 {
+                    enpassant_pos = (p1, match self.turn {
+                        true => p1-8,
+                        false => p1+8,
+                    });
+                    enpassant |= 1<<enpassant_pos.1;
+                } 
             }
-            pieces[i] |= 1<<p1;
         }
 
         let mut board = Board {
@@ -52,6 +77,7 @@ impl Board {
             checkmate: false,
             turn: !self.turn,
             enpassant: enpassant,
+            enpassant_pos: enpassant_pos,
             moves: [0; 64]
         };
         board.gen_moves();
@@ -59,24 +85,22 @@ impl Board {
     }
 
     fn gen_moves(&mut self) {
-        let (us, them, pawn_attacks, pawn_home) = match self.turn {
+        type PawnFn = fn(usize, usize) -> u64;
+        let (us, them, pawn_attacks, pawn_home, pawn_fn) = match self.turn {
             true => (
                 self.players[0], 
                 self.players[1], 
                 PAWN_ATTACKS_P0,
-                8..16
+                8..16,
+                ( |p, n| 1u64 << (p+n) ) as PawnFn,
             ),
             false => (
                 self.players[1], 
                 self.players[0], 
                 PAWN_ATTACKS_P1,
-                48..56
+                48..56,
+                ( |p, n| 1u64 << (p-n) ) as PawnFn,
             ),
-        };
-
-        let pawn_fn: Box<dyn Fn(usize, usize) -> u64> = match self.turn {
-            true => Box::new(|p, n| 1<<(p+n)),
-            false => Box::new(|p, n| 1<<(p-n)),
         };
 
         let any = us | them;
@@ -96,7 +120,7 @@ impl Board {
                         if mv != 0 && pawn_home.contains(&pos) {
                             mv |= !any & pawn_fn(pos, 16);
                         }
-                        mv | (pawn_attacks[pos] & them)
+                        mv | ((them | self.enpassant) & pawn_attacks[pos])
                     },
                     _ => 0
                 };
