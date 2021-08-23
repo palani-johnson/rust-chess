@@ -90,14 +90,14 @@ impl Board {
             true => (
                 self.players[0], 
                 self.players[1], 
-                PAWN_ATTACKS_P0,
+                *PAWN_ATTACKS_P0,
                 8..16,
                 ( |p, n| 1u64 << (p+n) ) as PawnFn,
             ),
             false => (
                 self.players[1], 
                 self.players[0], 
-                PAWN_ATTACKS_P1,
+                *PAWN_ATTACKS_P1,
                 48..56,
                 ( |p, n| 1u64 << (p-n) ) as PawnFn,
             ),
@@ -127,5 +127,7 @@ impl Board {
                 piece ^= 1 << pos;
             }
         }
+
+        println!("{}", ROOK_MAGIC_RAYS[0]);
     }
 }
