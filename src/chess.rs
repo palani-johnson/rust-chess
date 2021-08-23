@@ -66,3 +66,10 @@ pub fn term_run() {
     }
 
 }
+
+pub fn _show_bitboard(bitboard: u64) {
+    init_term();
+    reset_board();
+    print_bitboard(bitboard, 2, 6);
+    println!("\n\n\n\n\n\n\n\n\n")
+}
