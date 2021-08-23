@@ -17,78 +17,100 @@ lazy_static! {
         (1, 2), (2, 1), 
         (1, -2), (2, -1),
         (-1, 2), (-2, 1), 
-        (-1, -2), (-2, -1)
+        (-1, -2), (-2, -1),
     ]);
 
     pub static ref KING_CACHE: [u64; 64] = cache_moves(vec![
         (1, 1), (-1, -1), 
         (0, 1), (0, -1),
         (1, 0), (-1, 0), 
-        (-1, 1), (1, -1)
+        (-1, 1), (1, -1),
     ]);
 
     pub static ref PAWN_ATTACKS_P0: [u64; 64] = cache_moves(vec![
-        (1, 1), (1, -1)
+        (1, 1), (1, -1),
     ]);
 
     pub static ref PAWN_ATTACKS_P1: [u64; 64] = cache_moves(vec![
-        (-1, 1), (-1, -1)
+        (-1, 1), (-1, -1),
     ]);
 
-    pub static ref ROOK_MAGIC_RAYS: [u64; 64] = cache_magic_rays(vec![
+    pub static ref ROOK_BLOCKER_RAYS: [u64; 64] = cache_rays(vec![
         (0, 1), (0, -1),
-        (1, 0), (-1, 0)
+        (1, 0), (-1, 0),
     ]);
 
-    pub static ref BISHOP_MAGIC_RAYS: [u64; 64] = cache_magic_rays(vec![
+    pub static ref BISHOP_BLOCKER_RAYS: [u64; 64] = cache_rays(vec![
         (1, 1), (-1, -1), 
-        (-1, 1), (1, -1)
+        (-1, 1), (1, -1),
     ]);
+
+    pub static ref ROOK_MAGICS: [u64; 64] = [0; 64];
+
+    pub static ref ROOK_MAGICS: [u64; 64] = [0; 64];
 }
 
 
 fn cache_moves(pairs: Vec<(i32, i32)>) -> [u64; 64] {
     let mut moves = [0; 64];
 
-    for rank in 0..=7 {
-        for file in 0..=7 {
-            let n = 8*rank + file;
-            for pair in &pairs {
-                let (r, f) = (
-                    pair.0 + rank as i32, 
-                    pair.1 + file as i32
-                );
-                moves[n] |= match (r, f) {
-                    (0..=7, 0..=7) => 1 << 8*r + f,
-                    _ => 0
-                };
-            }
+    for n in 0..64 {
+        for (rank_step, file_step) in &pairs {
+            moves[n as usize] |= stepper(
+                n / 8,
+                n % 8,
+                *rank_step,
+                *file_step,
+                false
+            );
         }
     }
 
     return moves;
 }
 
-fn cache_magic_rays(pairs: Vec<(i32, i32)>) -> [u64; 64] {
+fn cache_rays(pairs: Vec<(i32, i32)>) -> [u64; 64] {
     let mut moves = [0; 64];
 
-    for mut rank in 0..=7  {
-        for mut file in 0..=7 {
-            let n = 8*rank + file;
-            for pair in &pairs {
-                let (r, f) = (
-                    pair.0 + rank, 
-                    pair.1 + file
-                );
-                match (r, f) {
-                    (0..=7, 0..=7) => moves[n as usize] |= 1 << 8*r + f,
-                    _ => break,
-                }
-                rank = r;
-                file = f;
-            }
+    for n in 0..64 {
+        let mut m = 0;
+        let rank = n / 8;
+        let file = n % 8;
+
+        for (rank_step, file_step) in &pairs {
+            m |= stepper(
+                rank,
+                file,
+                *rank_step,
+                *file_step,
+                true,
+            );
         }
+
+        if rank != 0 { m &= !0x00000000000000ff }
+        if rank != 7 { m &= !0xff00000000000000 }
+        if file != 0 { m &= !0x0101010101010101 }
+        if file != 7 { m &= !0x8080808080808080 }
+
+        moves[n as usize] = m;
     }
 
     return moves;
+}
+
+fn stepper(mut rank: i32, mut file: i32, rank_step:  i32, file_step: i32, ray: bool) -> u64 {
+    let mut m = 0;
+
+    loop {
+        rank += rank_step;
+        file += file_step;
+        match (rank, file) {
+            (0..=7, 0..=7) => m |= 1 << 8*rank + file,
+            _ => break
+        };
+
+        if !ray { break }
+    }
+
+    return m;
 }
