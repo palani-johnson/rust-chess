@@ -1,5 +1,6 @@
 use crate::chess::cache::*;
 
+
 pub struct Board {
     // Player bitboards: [player1, player2]
     pub players: [u64; 2],
@@ -103,7 +104,7 @@ impl Board {
             ),
         };
 
-        let any = us | them;
+        let occupied = us | them;
 
         let our_pieces = self.pieces.map(|p| p & us);
 
@@ -116,9 +117,9 @@ impl Board {
                     3 => 3,
                     4 => !us & KNIGHT_CACHE[pos],
                     5 => {
-                        let mut mv = !any & pawn_fn(pos, 8);
+                        let mut mv = !occupied & pawn_fn(pos, 8);
                         if mv != 0 && pawn_home.contains(&pos) {
-                            mv |= !any & pawn_fn(pos, 16);
+                            mv |= !occupied & pawn_fn(pos, 16);
                         }
                         mv | ((them | self.enpassant) & pawn_attacks[pos])
                     },
@@ -127,7 +128,5 @@ impl Board {
                 piece ^= 1 << pos;
             }
         }
-
-        println!("{}", ROOK_MAGIC_RAYS[0]);
     }
 }
