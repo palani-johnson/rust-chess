@@ -20,8 +20,8 @@ pub struct Board {
 impl Board {
     pub fn init() -> Board { 
         let mut board = Board {
-            players: PLAYERS_START,
-            pieces: PIECES_START,
+            players: PLAYERS,
+            pieces: PIECES,
             checkmate: false,
             turn: true,
             enpassant: 0,
@@ -111,11 +111,11 @@ impl Board {
         for (i, &(mut piece)) in our_pieces.iter().enumerate() {    
             while let pos@0..=63 = piece.trailing_zeros() as usize {
                 self.moves[pos] = match i {
-                    0 => !us & KING_CACHE[pos],
-                    1 => 1,
-                    2 => 2,
-                    3 => 3,
-                    4 => !us & KNIGHT_CACHE[pos],
+                    0 => !us & KING_ATTACKS[pos],
+                    1 => !us & (bishop_moves(pos, occupied) | rook_moves(pos, occupied)),
+                    2 => !us & bishop_moves(pos, occupied),
+                    3 => !us & rook_moves(pos, occupied),
+                    4 => !us & KNIGHT_ATTACKS[pos],
                     5 => {
                         let mut mv = !occupied & pawn_fn(pos, 8);
                         if mv != 0 && pawn_home.contains(&pos) {
@@ -129,4 +129,18 @@ impl Board {
             }
         }
     }
+}
+
+fn rook_moves(pos: usize, mut occupied: u64) -> u64 {
+    occupied &= ROOK_MASKS[pos];
+    occupied *= ROOK_MAGICS[pos];
+    occupied >>= ROOK_SHIFTS[pos];
+    return ROOK_ATTACKS[pos][occupied as usize];
+}
+
+fn bishop_moves(pos: usize, mut occupied: u64) -> u64 {
+    occupied &= BISHOP_MASKS[pos];
+    occupied *= BISHOP_MAGICS[pos];
+    occupied >>= BISHOP_SHIFTS[pos];
+    return BISHOP_ATTACKS[pos][occupied as usize];
 }

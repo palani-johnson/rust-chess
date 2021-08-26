@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 termion = "*"   # for printing the board to the terminal
 lazy_static = "*"
+rand = "*"
